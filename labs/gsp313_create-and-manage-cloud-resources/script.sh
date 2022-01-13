@@ -13,7 +13,7 @@ gcloud config set compute/zone us-east1-b
 gcloud container clusters create nucleus-jumphost-webserver1
 gcloud container clusters get-credentials nucleus-jumphost-webserver1
 kubectl create deployment hello-app --image=gcr.io/google-samples/hello-app:2.0
-kubectl expose deployment hello-app --type=LoadBalancer --port 8080
+kubectl expose deployment hello-app --type=LoadBalancer --port 8081
 kubectl get service
 
 # 3. Create the web server frontend 
