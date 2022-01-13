@@ -40,7 +40,7 @@ gcloud compute instance-groups managed create nginx-group \
     --target-pool nginx-pool
 
 ## 3.4 Create firewall rule
-gcloud compute firewall-rules create www-firewall --allow tcp:80
+gcloud compute firewall-rules create allow-tcp-rule-448 --allow tcp:80
 gcloud compute forwarding-rules create nginx-lb \
     --region us-east1 \
     --ports=80 \
