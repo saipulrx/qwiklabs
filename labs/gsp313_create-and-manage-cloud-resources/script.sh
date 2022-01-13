@@ -2,7 +2,7 @@
 # https://www.qwiklabs.com/focuses/10258
 
 # 1. Create a project jumphost instance (zone: us-east1-b)
-gcloud compute instances create nucleus-jumphost \
+gcloud compute instances create nucleus-jumphost-261 \
         --zone="us-east1-b" \
         --machine-type="f1-micro" \
         --boot-disk-size=10GB
