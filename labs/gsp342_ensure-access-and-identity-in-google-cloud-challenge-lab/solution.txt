@@ -2,7 +2,7 @@
 # https://www.cloudskillsboost.google/focuses/14572?parent=catalog&qlcampaign=6s-juaragcp-11
 
 # Task 1: Create a custom security role.
-#1) set default zone to jakarta
+#1) set default zone to us-east1 same with jumphost zone
 gcloud config set compute/zone us-east1-b
 
 #2) create custom role name role.yaml
