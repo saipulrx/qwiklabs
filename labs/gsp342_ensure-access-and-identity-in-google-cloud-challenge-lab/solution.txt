@@ -1,0 +1,82 @@
+# Ensure Access & Identity in Google Cloud: Challenge Lab
+# https://www.cloudskillsboost.google/focuses/14572?parent=catalog&qlcampaign=6s-juaragcp-11
+
+# Task 1: Create a custom security role.
+#1) set default zone to jakarta
+gcloud config set compute/zone us-east1-b
+
+#2) create custom role name role.yaml
+nano role.yaml
+==== isi file role.yaml =====
+title: "Orca Storage Manager"
+description: "Orca Storage Manager Role"
+includedPermissions:
+- storage.buckets.get
+- storage.objects.get
+- storage.objects.list
+- storage.objects.update
+- storage.objects.create
+==== isi file role.yaml =====
+
+#3) run custom role 
+gcloud iam roles create [custom_security_role_name] \
+--project $DEVSHELL_PROJECT_ID \
+--file role.yaml
+
+# Task 2: Create service account
+gcloud iam service-accounts create [service_account_name] \
+--display-name="Orca Private Cluster 777 Service Account"
+
+# Task 3: Bind a custom security role to a service account
+# add roles monitoring.viewer
+gcloud projects add-iam-policy-binding $DEVSHELL_PROJECT_ID \
+--member=serviceAccount:[serviceAccount@$DEVSHELL_PROJECT_ID.iam.gserviceaccount.com] \
+--role=roles/monitoring.viewer
+
+#add roles monitoring.metricWriter
+gcloud projects add-iam-policy-binding $DEVSHELL_PROJECT_ID \
+--member=serviceAccount:[serviceAccount@$DEVSHELL_PROJECT_ID.iam.gserviceaccount.com] \
+--role=roles/monitoring.metricWriter
+
+#add roles logging.logWriter
+gcloud projects add-iam-policy-binding $DEVSHELL_PROJECT_ID \
+--member=serviceAccount:[serviceAccount@$DEVSHELL_PROJECT_ID.iam.gserviceaccount.com] \
+--role=roles/logging.logWriter
+
+#add custom role in task 1
+gcloud projects add-iam-policy-binding $DEVSHELL_PROJECT_ID \
+--member=serviceAccount:[serviceAccount@$DEVSHELL_PROJECT_ID.iam.gserviceaccount.com] \
+--role=projects/$DEVSHELL_PROJECT_ID/roles/[custom_security_role_name]
+
+#Task 4: Create and configure a new Kubernetes Engine private cluster
+#1. setup jumphost IP 
+JUMPHOST_IP=$(gcloud compute instances describe orca-jumphost --format='get(networkInterfaces[0].networkIP)')
+echo $JUMPHOST_IP
+
+#2. setup subnet IP range from region Task 1 no 1
+#cek subnet IP range in VPC network default
+SUBNET_IP_RANGE="10.142.0.0/28"
+echo $SUBNET_IP_RANGE
+
+#3. create Kubernetes engine cluster
+gcloud beta container clusters create [kubernetes_cluster_name] \
+--network orca-build-vpc \
+--subnetwork orca-build-subnet \
+--service-account [serviceAccount@$DEVSHELL_PROJECT_ID.iam.gserviceaccount.com] \
+--enable-master-authorized-networks \
+--master-authorized-networks $JUMPHOST_IP/32 \
+--enable-ip-alias \
+--enable-private-nodes \
+--master-ipv4-cidr $SUBNET_IP_RANGE \
+--enable-private-endpoint
+
+#Task 5: Deploy an application to a private Kubernetes Engine cluster
+#1. ssh to vm jumphost
+#2. login to gke cluster
+gcloud container clusters get-credentials [kubernetes_cluster_name] --internal-ip --zone us-east1-b
+
+#3. deploy simple apps to gke cluster
+kubectl create deployment hello-server --image=gcr.io/google-samples/hello-app:1.0
+
+#4. expose deployment to port 80 and target port 8080
+kubectl expose deployment hello-server --name orca-hello-service --type LoadBalancer --port 80 --target-port 8080
